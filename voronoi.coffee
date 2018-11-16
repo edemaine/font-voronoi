@@ -193,9 +193,25 @@ class VoronoiEditor extends VoronoiBox
     #@svg.touchstart (e) => @dragnew e
     @svg.mouseup (e) => @dragstop e
     @svg.on 'mouseleave', (e) => @dragstop e
-    #@svg.touchend (e) => @dragstop e
+    @svg.touchend touchend = (e) =>
+      return unless @dragTouch?
+      e.preventDefault()
+      e.stopPropagation()
+      for touch in e.changedTouches
+        if touch.identifier == @dragTouch
+          @dragTouch = null
+          @dragstop touch
+          break
+    @svg.touchcancel touchend
     @svg.mousemove (e) => @dragmove e
-    #@svg.touchmove (e) => @dragmove e
+    @svg.touchmove (e) =>
+      return unless @dragTouch?
+      e.preventDefault()
+      e.stopPropagation()
+      for touch in e.changedTouches
+        if touch.identifier == @dragTouch
+          @dragmove touch
+          break
     #@svg.mouseout (e) =>
     #  console.log 'out'
     #  @dragging = null
@@ -239,6 +255,13 @@ class VoronoiEditor extends VoronoiBox
             ## Without modifier, still want to drag the set.
             @dragSet = [site] unless site in @dragSet
           @dragstart e
+        .touchstart (e) =>
+          e.preventDefault()
+          e.stopPropagation()
+          @dragclear()
+          @dragTouch = e.changedTouches[0].identifier
+          @dragSet = [site]
+          @dragstart e.changedTouches[0]
         #.mouseup (e) ->
         #  unless e.shiftKey or e.ctrlKey
         #    @dragSet = [site]
@@ -272,8 +295,8 @@ class VoronoiEditor extends VoronoiBox
     @siteChange()
 
   dragmove: (e) ->
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault?()
+    e.stopPropagation?()
     if @dragPoint?
       point = @screen_pt e
       for site in @dragSet
@@ -304,8 +327,8 @@ class VoronoiEditor extends VoronoiBox
       @removeDupSites()
       @dragPoint = null
       @saveState()
-      e.preventDefault()
-      e.stopPropagation()
+      e.preventDefault?()
+      e.stopPropagation?()
 
   saveState: ->
     return unless @alone
