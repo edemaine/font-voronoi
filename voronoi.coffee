@@ -9,7 +9,7 @@ siteSelectStroke =
   color: '#cccc00'
   width: 0.01
 siteDefaultStroke = 'none'
-edgeWidth = 0.01
+edgeWidth = 0.01  # also in voronoi.styl
 gridStroke =
   color: '#cccccc'
   width: 0.005
@@ -31,14 +31,11 @@ class VoronoiBox
 
     if @svg?
       @svg.rect boxWidth, boxHeight
-      .fill 'white'
+      .addClass 'bg'
       @gridGroup = @svg.group()
       .addClass 'grid'
       @svg.rect boxWidth, boxHeight
-      .fill 'none'
-      .stroke
-        color: 'green'
-        width: edgeWidth
+      .addClass 'outline'
       @svg.viewbox
         x: -edgeWidth/2
         y: -edgeWidth/2

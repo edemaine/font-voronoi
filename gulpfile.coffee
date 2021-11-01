@@ -31,6 +31,7 @@ exports.build = build = gulp.series pug, coffee, font
 ## npm run watch / npx gulp watch: continuously update above
 exports.watch = watch = ->
   gulp.watch '*.pug', ignoreInitial: false, pug
+  gulp.watch '*.styl', pug
   gulp.watch '*.coffee',
     ignore: 'gulpfile.coffee'
     ignoreInitial: false
