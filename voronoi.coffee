@@ -490,128 +490,39 @@ showIt = ->
 
 ## FONT GUI
 
-radioButtons = [
-  options: ['voronoiFont', 'inverseFont']
-  default: 'voronoiFont'
-,
-  options: ['sitesVoronoi', 'sitesOnly', 'voronoiOnly']
-  default: 'sitesVoronoi'
-]
-checkboxes = ['voronoiFont', 'inverseFont', 'sitesVoronoi', 'sitesOnly', 'voronoiOnly', 'grid', 'draggable']
-checkboxesRebuild = ['voronoiFont', 'inverseFont', 'draggable']
-
-loadState = ->
-  for checkbox in checkboxes
-    document.getElementById(checkbox).checked = getParameterByName checkbox
-  for radio in radioButtons
-    if (true for key in radio.options when document.getElementById(key).checked).length == 0
-      document.getElementById(radio.default).checked = true
-  text = getParameterByName('text') ? 'text'
-  document.getElementById('text').value = text
-  updateText false
-
-old = {}
-updateText = (setUrl = true, force = false) ->
-  params = {}
-  params.text = document.getElementById('text').value
-    .replace(/\r\n/g, '\r').replace(/\r/g, '\n')
-  for checkbox in checkboxes
-    params[checkbox] = document.getElementById(checkbox).checked
-  classes = []
-  classes.push 'hideGrid' unless params.grid
-  classes.push 'hideSites' if params.voronoiOnly
-  classes.push 'hideVoronoi' if params.sitesOnly
-  classes.push 'voronoiFont' if params.voronoiFont
-  classes.push 'inverseFont' if params.inverseFont
-  document.getElementById('output').setAttribute 'class', classes.join ' '
-  size = document.getElementById('size').value
-  document.getElementById('svgSize').sheet.deleteRule 0
-  document.getElementById('svgSize').sheet.insertRule(
-    "svg { width: #{size}px; height: #{size}px }", 0)
-  checkParams =
-    text: params.text
-  for checkbox in checkboxesRebuild
-    checkParams[checkbox] = params[checkbox]
-  return if (true for key of checkParams when checkParams[key] == old[key]).length == (key for key of checkParams).length and not force
-  old = checkParams
-
-  font =
-    if params['inverseFont']
-      'inverse'
-    else
-      'voronoi'
-  if font == 'voronoi'
-    document.getElementById('sitesPuzzle').style.visibility = 'visible'
-    document.getElementById('voronoiPuzzle').style.visibility = 'hidden'
-  else
-    document.getElementById('sitesPuzzle').style.visibility = 'hidden'
-    document.getElementById('voronoiPuzzle').style.visibility = 'visible'
-  Box =
-    if params['draggable']
-      VoronoiEditor
-    else
-      VoronoiBox
-
-  charBoxes = {}
-  output = document.getElementById 'output'
-  output.innerHTML = '' ## clear previous children
-  for line in params.text.split '\n'
-    output.appendChild outputLine = document.createElement 'p'
-    outputLine.setAttribute 'class', 'line'
-    outputLine.appendChild outputWord = document.createElement 'span'
-    outputWord.setAttribute 'class', 'word'
-    for char, c in line
-      char = char.toUpperCase()
-      if char of window.fonts[font]
-        letter = window.fonts[font][char]
-        svg = SVG().addTo outputWord
-        box = Box.fromFont letter, svg
-        charBoxes[char] ?= []
-        charBoxes[char].push box
-        box.linked = charBoxes[char]
-      else if char == ' '
-        #space = document.createElement 'span'
-        #space.setAttribute 'class', 'space'
-        #outputLine.appendChild space
-        outputLine.appendChild outputWord = document.createElement 'span'
-        outputWord.setAttribute 'class', 'word'
-      else
-        console.log "Unknown character '#{char}'"
-
-  if setUrl
-    encoded =
-      for key, value of params
-        if value == true
-          value = '1'
-        else if value == false
-          continue
-        key + '=' + encodeURIComponent(value).replace /%20/g, '+'
-    history.pushState null, 'text',
-      "#{document.location.pathname}?#{encoded.join '&'}"
-
-fontResize = ->
-  document.getElementById('size').max =
-    document.getElementById('size').scrollWidth - 30 - 2
-                                              # - circle width - border width
-
 fontGui = ->
-  updateTextSoon = (event) ->
-    setTimeout updateText, 0
-    true
-  for event in ['input', 'propertychange', 'keyup']
-    document.getElementById('text').addEventListener event, updateTextSoon
-  for event in ['input', 'propertychange', 'click']
-    for checkbox in checkboxes
-      document.getElementById(checkbox).addEventListener event, updateTextSoon
-  for event in ['input', 'propertychange', 'click']
-    document.getElementById('size').addEventListener event, updateTextSoon
-  document.getElementById('reset').addEventListener 'click', ->
-    updateText false, true
+  ## Convert old URL format (pre-furls) to new format
+  search = window.location.search
+  search = search
+  .replace /inverseFont=1/g, 'font=inverse'
+  .replace /voronoiFont=1/g, 'font=voronoi'
+  .replace /sitesVoronoi=1/g, 'show=both'
+  .replace /sitesOnly=1/g, 'show=sites'
+  .replace /voronoiOnly=1/g, 'show=voronoi'
+  window.location.search = search unless window.location.search == search
 
-  window.addEventListener 'popstate', loadState
-  loadState()
-  window.addEventListener 'resize', fontResize
-  fontResize()
+  app = new FontWebappHTML
+    root: '#output'
+    sizeSlider: '#size'
+    charWidth: 200
+    charPadding: 0
+    lineKern: 32
+    spaceWidth: 50
+    shouldRender: (changed) ->
+      changed.text or changed.font or changed.draggable
+    renderChar: (char, state, parent) ->
+      font = state.font
+      char = char.toUpperCase()
+      letter = window.fonts[font][char]
+      return unless letter?
+      Box =
+        if state.draggable
+          VoronoiEditor
+        else
+          VoronoiBox
+      Box.fromFont letter, SVG().addTo parent
+    linkIdenticalChars: (glyphs) ->
+      glyph.linked = glyphs for glyph in glyphs
 
   for font in ['voronoi', 'inverse']
     document.getElementById("#{font}Links").innerHTML = (
