@@ -30,6 +30,8 @@ class VoronoiBox
     @voronoiGroup = @gridGroup = @siteGroup = null
 
     if @svg?
+      @svg.rect boxWidth, boxHeight
+      .fill 'white'
       @gridGroup = @svg.group()
       .addClass 'grid'
       @svg.rect boxWidth, boxHeight
