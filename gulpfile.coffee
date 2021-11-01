@@ -7,7 +7,9 @@ child_process = require 'child_process'
 ## npm run pug / npx gulp pug: builds index.html from index.pug etc.
 exports.pug = pug = ->
   gulp.src '*.pug'
-  .pipe gulpPug pretty: true
+  .pipe gulpPug pretty: false #true
+    # working around bug that <label> and <input> add extra spaces
+    # in pretty mode
   .pipe gulpChmod 0o644
   .pipe gulp.dest './'
 

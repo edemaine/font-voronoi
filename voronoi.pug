@@ -1,0 +1,50 @@
+doctype html
+html
+  head
+    title Voronoi Designer
+    script(type="text/javascript", src="../../js/svg.min.js")
+    script(type="text/javascript", src="rhill-voronoi-core.min.js")
+    script(type="text/javascript", src="voronoi.js")
+    style
+      :stylus
+        @media print
+          .noprint
+            display: none
+
+        .w-100
+          width: 100%
+
+      include:stylus voronoi.styl
+    //#include virtual="../../analytics.html"
+  body.voronoi-font
+    table.w-100
+      tr
+        td(style="text-align: left; vertical-align: middle;")
+          h1
+            a(href="voronoi.html") Voronoi Designer
+        td(style="text-align: center; vertical-align: middle;")
+          input#grid(type="button", value="Grid Off")
+          input#lessGrid(type="button", value="Less Grid")
+          input#moreGrid(type="button", value="More Grid")
+          br
+          | Flip/rotate:
+          button#flipHorizontal &#x2194;
+          button#flipVertical &#x2195;
+          button#rotateLeft &#x21BA;
+          button#rotateRight &#x21BB;
+          br
+          | Shift:
+          button#shiftLeft &larr;
+          button#shiftUp &uarr;
+          button#shiftDown &darr;
+          button#shiftRight &rarr;
+        td(style="vertical-align: middle;")
+          | <b>Delete</b> point by dragging it outside the square.
+          br
+          | <b>Multiselect</b> points by clicking while
+          br
+          | holding <kbd>SHIFT</kbd> (add) or <kbd>CONTROL</kbd> (toggle).
+        td(style="text-align: right; vertical-align: middle;")
+          h2 by <a href="https://erikdemaine.org/">Erik Demaine</a> and <a href="http://martindemaine.org">Martin Demaine</a>, 2016
+
+    #voronoi.w-100

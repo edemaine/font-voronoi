@@ -1,0 +1,11 @@
+.voronoi
+  line
+    stroke: black
+    stroke-width: 0.01
+    stroke-linecap: round
+
+    // inverseFont doesn't highlight infinite lines
+    /.voronoi-font &.infinite
+      stroke: gray
+      stroke-dasharray: 0.01, 0.01
+      stroke-linecap: butt

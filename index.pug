@@ -1,0 +1,241 @@
+doctype html
+html
+  head
+    title Voronoi Font
+    script(type="text/javascript", src="../../js/svg.min.js")
+    script(type="text/javascript", src="rhill-voronoi-core.min.js")
+    script(type="text/javascript", src="font.js")
+    script(type="text/javascript", src="voronoi.js")
+    style
+      :stylus
+        @media print
+          .noprint
+            display: none
+
+        textarea
+          vertical-align: middle
+        .w-100
+          width: 100%
+
+        svg
+          border-top: green solid
+          border-bottom: green solid
+        svg:first-child
+          border-left: green solid
+        svg:last-child
+          border-right: green solid
+        // .space { margin-right: 50px; }
+        .word + .word
+          margin-left: 50px
+
+        .hideGrid .grid, .hideSites .sites, .hideVoronoi .voronoi
+          display: none
+
+      include:stylus voronoi.styl
+
+      .
+        // from http://danielstern.ca/range.css/
+        input[type=range] {
+          -webkit-appearance: none;
+          width: 100%;
+          margin: 5px 0;
+        }
+        input[type=range]:focus {
+          outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+          width: 100%;
+          height: 5px;
+          cursor: pointer;
+          box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+          background: #c8c8c8;
+          border-radius: 1px;
+          border: 0.2px solid #010101;
+        }
+        input[type=range]::-webkit-slider-thumb {
+          box-shadow: 0.9px 0.9px 1px #000031, 0px 0px 0.9px #00004b;
+          border: 1px solid #00001e;
+          height: 15px;
+          width: 15px;
+          border-radius: 15px;
+          background: #80c4ff;
+          cursor: pointer;
+          -webkit-appearance: none;
+          margin-top: -5.2px;
+        }
+        input[type=range]:focus::-webkit-slider-runnable-track {
+          background: #e2e2e2;
+        }
+        input[type=range]::-moz-range-track {
+          width: 100%;
+          height: 5px;
+          cursor: pointer;
+          box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+          background: #c8c8c8;
+          border-radius: 1px;
+          border: 0.2px solid #010101;
+        }
+        input[type=range]::-moz-range-thumb {
+          box-shadow: 0.9px 0.9px 1px #000031, 0px 0px 0.9px #00004b;
+          border: 1px solid #00001e;
+          height: 15px;
+          width: 15px;
+          border-radius: 15px;
+          background: #80c4ff;
+          cursor: pointer;
+        }
+        input[type=range]::-ms-track {
+          width: 100%;
+          height: 5px;
+          cursor: pointer;
+          background: transparent;
+          border-color: transparent;
+          color: transparent;
+        }
+        input[type=range]::-ms-fill-lower {
+          background: #afafaf;
+          border: 0.2px solid #010101;
+          border-radius: 2px;
+          box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+        }
+        input[type=range]::-ms-fill-upper {
+          background: #c8c8c8;
+          border: 0.2px solid #010101;
+          border-radius: 2px;
+          box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+        }
+        input[type=range]::-ms-thumb {
+          box-shadow: 0.9px 0.9px 1px #000031, 0px 0px 0.9px #00004b;
+          border: 1px solid #00001e;
+          height: 15px;
+          width: 15px;
+          border-radius: 15px;
+          background: #80c4ff;
+          cursor: pointer;
+          height: 5px;
+        }
+        input[type=range]:focus::-ms-fill-lower {
+          background: #c8c8c8;
+        }
+        input[type=range]:focus::-ms-fill-upper {
+          background: #e2e2e2;
+        }
+
+    style#svgSize(type="text/css").
+      svg { width: 200px; height: 200px; }
+    //#include virtual="../../analytics.html"
+  body
+    table.w-100
+      tr
+        td(style="text-align: left; vertical-align: middle;")
+          h1
+            a(href="./") Voronoi Font
+        td(style="text-align: right; vertical-align: middle;")
+          h2 by <a href="https://erikdemaine.org/">Erik Demaine</a> and <a href="http://martindemaine.org">Martin Demaine</a>, 2017
+
+    table#data.w-100.noprint
+      tr
+        td
+          label(for="text") Enter text to render: &nbsp;
+          textarea#text(name="text", rows=4, cols=40)
+        td
+          input#voronoiFont(type="radio", name="font")
+          label(for="voronoiFont") Voronoi&nbsp;typeface
+          br
+          input#inverseFont(type="radio", name="font")
+          label(for="inverseFont") Inverse&nbsp;typeface
+        td
+          table
+            tr
+              td
+                input#sitesVoronoi(type="radio", name="show")
+                label(for="sitesVoronoi") Sites&nbsp;and&nbsp;Voronoi
+            tr
+              td
+                input#sitesOnly(type="radio", name="show")
+                label(for="sitesOnly") Sites&nbsp;only
+                |  
+                b#sitesPuzzle(style="visibility: hidden") (puzzle)
+            tr
+              td
+                input#voronoiOnly(type="radio", name="show")
+                label(for="voronoiOnly") Voronoi&nbsp;only
+                |  
+                b#voronoiPuzzle(style="visibility: hidden") (puzzle)
+        td
+          input#grid(type="checkbox")
+          label(for="grid") Grid
+          br
+          input#draggable(type="checkbox")
+          label(for="draggable") Draggable
+          br
+          button#reset.w-100 Reset
+
+    input.noprint.w-100#size(type="range", min="16", max="600", value="200", title="Size of characters")
+
+    p
+
+    #output.w-100
+
+    hr.noprint
+
+    p.noprint.
+      The <b><a href="https://en.wikipedia.org/wiki/Voronoi_diagram">Voronoi
+      diagram</a></b> of a set of points (called <b>sites</b>)
+      decomposes the plane into cells, one for each point/site, according
+      to what points are closest to that site than any other site.
+      Equivalently, if you light a fire or grow a bacteria simultaneously
+      from all the sites, then the cells are where each fire/bacteria goes,
+      and the Voronoi diagram is where they meet each other.
+
+    p.noprint.
+      We offer two typefaces are based on the Voronoi diagram.
+      &bull;
+      In the &ldquo;<b>Voronoi typeface</b>&rdquo;, the sites are arranged
+      so that the Voronoi diagram looks like a letter or numeral.
+      Here we rely on hiding (dashing) all Voronoi edges that go
+      off to infinity (or more precisely, that exit the square frame).
+      In this case, we obtain a puzzle font by hiding the Voronoi diagram,
+      and just showing the sites; to decipher the letter/numeral, you have
+      to compute the Voronoi diagram.
+      &bull;
+      In the &ldquo;<b>Inverse typeface</b>&rdquo;, the sites themselves are
+      arranged to form the letter or numeral.  In this case, the Voronoi diagram
+      becomes the puzzle font: to decode the letter, you must reverse engineer
+      what sites would produce this Voronoi diagram.
+      This problem
+      <a href="https://www.sthu.org/research/publications/files/BHH13b.pdf">can
+      be solved in polynomial time</a>; see also the related case of
+      <a href="https://arxiv.org/abs/1308.5550">allowing additional sites</a>.
+
+    p.noprint.
+      There are several font variations for you to play with.
+      &bull;
+      You can show/hide the <b>sites</b> and/or the <b>Voronoi diagram</b>,
+      in particular to produce <b>puzzle fonts</b>.
+      &bull;
+      You can toggle visibility of the <b>grid</b> that the sites were designed
+      on.
+      &bull;
+      <b>Draggable</b> mode lets you play with modifying the letters by
+      dragging the points around, and having the Voronoi diagram dynamically
+      update.  (Outside this mode, the Voronoi diagram is precomputed.)
+      All changes are temporary, and will be reset if the text or font change.
+      The <b>Reset</b> button will also reset all changes.
+      &bull;
+      The <b>slider</b> allows you to scale the size of the letters/numerals.
+
+    p.noprint.
+      These fonts were designed in our custom
+      <a href="voronoi.html">Voronoi Designer</a> webapp.
+      Try making your own letters!
+      You can play with our font designs here:
+      &bull;
+      Voronoi typeface: <SPAN ID="voronoiLinks"></SPAN>
+      &bull;
+      Inverse typeface: <SPAN ID="inverseLinks"></SPAN>
+
+    p.noprint.
+      Check out <a href="http://erikdemaine.org/fonts/">other mathematical and
+      puzzle fonts</a>. &bull; Feedback or not working?
+      <a href="mailto:edemaine+fonts@mit.edu">Email Erik</a>.
