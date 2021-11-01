@@ -266,10 +266,7 @@ class VoronoiEditor extends VoronoiBox
         #    @dragSet = [site]
 
   screen_pt: (e) ->
-    p = @svg.node.createSVGPoint()
-    p.x = e.clientX
-    p.y = e.clientY
-    p.matrixTransform @svg.node.getScreenCTM().inverse()
+    @svg.point e.clientX, e.clientY
 
   dragclear: ->
     @dragPoint = null
@@ -440,7 +437,7 @@ resize = (id) ->
 
 editorGui = ->
   #return unless document.getElementById 'voronoi'
-  editor = new VoronoiEditor SVG 'voronoi'
+  editor = new VoronoiEditor SVG().addTo '#voronoi'
   editor.alone = true
 
   document.getElementById('grid').addEventListener 'click', -> editor.gridToggle()
@@ -486,7 +483,7 @@ showIt = ->
         box = document.createElement 'div'
         box.className = 'box'
         box.setAttribute 'title', label
-        v = VoronoiEditor.fromState url, SVG box
+        v = VoronoiEditor.fromState url, SVG().addTo box
         v.hideSites() if hide
         box
     )
@@ -567,7 +564,7 @@ updateText = (setUrl = true, force = false) ->
       char = char.toUpperCase()
       if char of window.fonts[font]
         letter = window.fonts[font][char]
-        svg = SVG outputWord
+        svg = SVG().addTo outputWord
         box = Box.fromFont letter, svg
         charBoxes[char] ?= []
         charBoxes[char].push box
