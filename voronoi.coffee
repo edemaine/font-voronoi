@@ -638,7 +638,7 @@ window?.onload = ->
 ## FONT PRECOMPUTATION
 
 main = ->
-  showMe = require('./allfont').showMe
+  showMe = require('./allfont.coffee').showMe
   fonts =
     voronoi: {}
     inverse: {}
