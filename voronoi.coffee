@@ -505,45 +505,45 @@ Box = (state) ->
 
 if window?.font?
   maxGridLevel = Math.max ...(letter.gridLevel for letter in window.font)
-
-class FontWebappVoronoi extends FontWebapp
-  initDOM: ->
-    @svg = SVG().addTo @root
-  render: (state = @furls.getState()) ->
-    @svg.clear()
-    #@box?.destroy()
-    @box = new (Box state) @svg
-    @box.gridLevel = maxGridLevel
-    y = 0
-    xmax = 0
-    for line in state.text.split '\n'
-      x = 0
-      dy = 0
-      for char, c in line
-        if char == ' ' and @options.spaceWidth?
-          x += @options.spaceWidth
-        else
-          x += @options.charKern unless c == 0 if @options.charKern?
-          if (glyph = @options.renderChar.call @, char, state, @box, x, y)?
-            x += glyph.width
+if FontWebapp?
+  class FontWebappVoronoi extends FontWebapp
+    initDOM: ->
+      @svg = SVG().addTo @root
+    render: (state = @furls.getState()) ->
+      @svg.clear()
+      #@box?.destroy()
+      @box = new (Box state) @svg
+      @box.gridLevel = maxGridLevel
+      y = 0
+      xmax = 0
+      for line in state.text.split '\n'
+        x = 0
+        dy = 0
+        for char, c in line
+          if char == ' ' and @options.spaceWidth?
+            x += @options.spaceWidth
           else
-            console.warn "Unrecognized character '#{char}'"
-          xmax = Math.max xmax, x
-          dy = Math.max dy, glyph.height
-      y += dy + (@options.lineKern ? 0)
-    @box.width = xmax
-    @box.height = y
-    @box.sizeChange()
-    @box.siteChange()
-    margin = @options.margin ? 0
-    @svg.viewbox
-      x: -margin
-      y: -margin
-      width: xmax + 2*margin
-      height: y + 2*margin
-  destroy: ->
-    super()
-    @svg.clear().remove()
+            x += @options.charKern unless c == 0 if @options.charKern?
+            if (glyph = @options.renderChar.call @, char, state, @box, x, y)?
+              x += glyph.width
+            else
+              console.warn "Unrecognized character '#{char}'"
+            xmax = Math.max xmax, x
+            dy = Math.max dy, glyph.height
+        y += dy + (@options.lineKern ? 0)
+      @box.width = xmax
+      @box.height = y
+      @box.sizeChange()
+      @box.siteChange()
+      margin = @options.margin ? 0
+      @svg.viewbox
+        x: -margin
+        y: -margin
+        width: xmax + 2*margin
+        height: y + 2*margin
+    destroy: ->
+      super()
+      @svg.clear().remove()
 
 fontGui = ->
   ## Convert old URL format (pre-furls) to new format
