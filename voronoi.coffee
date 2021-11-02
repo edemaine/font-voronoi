@@ -151,8 +151,8 @@ class VoronoiBox
       yb: @height
     @voronoiEdges =
       for edge in diagram.edges
-        continue if lineOnEditBox edge.va, edge.vb #onEditBox(edge.va) and onEditBox(edge.vb)
-        edge.infinite = onEditBox(edge.va) or onEditBox(edge.vb)
+        continue if @lineOnEditBox edge.va, edge.vb #@onEditBox(edge.va) and @onEditBox(edge.vb)
+        edge.infinite = @onEditBox(edge.va) or @onEditBox(edge.vb)
         edge
     @drawVoronoi()
 
@@ -314,7 +314,7 @@ class VoronoiEditor extends VoronoiBox
         site.x = pos.x
         site.y = pos.y
         site.circle.center site.x, site.y
-        if outsideEditBox site
+        if @outsideEditBox site
           site.circle.fill siteOutsideColor
         else
           site.circle.fill siteDragColor
@@ -326,7 +326,7 @@ class VoronoiEditor extends VoronoiBox
         site.circle.fill siteColor
       ## Drag outside box to delete a point.
       for site in @dragSet
-        if e.type == 'mouseleave' or outsideEditBox site
+        if e.type == 'mouseleave' or @outsideEditBox site
           @sites.splice @sites.indexOf(site), 1
           @dragSet.splice @dragSet.indexOf(site), 1
           @siteChange()
@@ -335,6 +335,18 @@ class VoronoiEditor extends VoronoiBox
       @saveState()
       e.preventDefault?()
       e.stopPropagation?()
+
+  outsideEditBox: (pt) ->
+    pt.x < 0 or pt.x > @width or pt.y < 0 or pt.y > @height
+
+  onEditBox: (pt) ->
+    (near(pt.x, 0) or near(pt.x, @width)) or (near(pt.y, 0) or near(pt.y, @height))
+
+  lineOnEditBox: (p, q) ->
+    (near(p.x, 0) and near(q.x, 0)) or
+    (near(p.x, @width) and near(q.x, @width)) or
+    (near(p.y, 0) and near(q.y, 0)) or
+    (near(p.y, @height) and near(q.y, @height))
 
   saveState: ->
     return unless @alone
@@ -415,20 +427,8 @@ getParameterByName = (name, search = location.search) ->
 #bboxCorner = (pt) ->
 #  (pt.x == 0 or pt.x == boxWidth) and (pt.y == 0 or pt.y == boxHeight)
 
-outsideEditBox = (pt) ->
-  pt.x < 0 or pt.x > boxWidth or pt.y < 0 or pt.y > boxHeight
-
 near = (a, b) ->
   Math.abs(a - b) < 0.0000001
-
-onEditBox = (pt) ->
-  (near(pt.x, 0) or near(pt.x, boxWidth)) or (near(pt.y, 0) or near(pt.y, boxHeight))
-
-lineOnEditBox = (p, q) ->
-  (near(p.x, 0) and near(q.x, 0)) or
-  (near(p.x, boxWidth) and near(q.x, boxWidth)) or
-  (near(p.y, 0) and near(q.y, 0)) or
-  (near(p.y, boxHeight) and near(q.y, boxHeight))
 
 ## Based on meouw's answer on http://stackoverflow.com/questions/442404/retrieve-the-position-x-y-of-an-html-element
 getOffset = (el) ->
