@@ -28,23 +28,21 @@ class VoronoiBox
     @gridOn = true
     @gridLevel = 2
     @voronoiGroup = @gridGroup = @siteGroup = null
+    @width = boxWidth
+    @height = boxHeight
 
     if @svg?
-      @svg.rect boxWidth, boxHeight
+      @bg = @svg.rect()
       .addClass 'bg'
       @gridGroup = @svg.group()
       .addClass 'grid'
-      @svg.rect boxWidth, boxHeight
+      @outline = @svg.rect()
       .addClass 'outline'
-      @svg.viewbox
-        x: -edgeWidth/2
-        y: -edgeWidth/2
-        width: boxWidth + edgeWidth
-        height: boxHeight + edgeWidth
       @voronoiGroup = @svg.group()
       .addClass 'voronoi'
       @siteGroup = @svg.group()
       .addClass 'sites'
+      @sizeChange()
 
   @fromState: (state, svg) ->
     v = new @ svg
@@ -84,6 +82,15 @@ class VoronoiBox
         x: parseFloat x
         y: parseFloat y
     @siteChange()
+
+  sizeChange: ->
+    for rect in [@bg, @outline]
+      rect.size @width, @height
+    @svg.viewbox
+      x: -edgeWidth/2
+      y: -edgeWidth/2
+      width: @width + edgeWidth
+      height: @height + edgeWidth
 
   gridChange: ->
     return unless @gridGroup?
@@ -136,9 +143,9 @@ class VoronoiBox
   computeVoronoi: ->
     diagram = voronoi.compute @sites,
       xl: 0
-      xr: boxWidth
+      xr: @width
       yt: 0
-      yb: boxHeight
+      yb: @height
     @voronoiEdges =
       for edge in diagram.edges
         continue if lineOnEditBox edge.va, edge.vb #onEditBox(edge.va) and onEditBox(edge.vb)
@@ -490,6 +497,54 @@ showIt = ->
 
 ## FONT GUI
 
+Box = (state) ->
+  if state.draggable
+    VoronoiEditor
+  else
+    VoronoiBox
+
+if window?.font?
+  maxGridLevel = Math.max ...(letter.gridLevel for letter in window.font)
+
+class FontWebappVoronoi extends FontWebapp
+  initDOM: ->
+    @svg = SVG().addTo @root
+  render: (state = @furls.getState()) ->
+    @svg.clear()
+    #@box?.destroy()
+    @box = new (Box state) @svg
+    @box.gridLevel = maxGridLevel
+    y = 0
+    xmax = 0
+    for line in state.text.split '\n'
+      x = 0
+      dy = 0
+      for char, c in line
+        if char == ' ' and @options.spaceWidth?
+          x += @options.spaceWidth
+        else
+          x += @options.charKern unless c == 0 if @options.charKern?
+          if (glyph = @options.renderChar.call @, char, state, @box, x, y)?
+            x += glyph.width
+          else
+            console.warn "Unrecognized character '#{char}'"
+          xmax = Math.max xmax, x
+          dy = Math.max dy, glyph.height
+      y += dy + (@options.lineKern ? 0)
+    @box.width = xmax
+    @box.height = y
+    @box.sizeChange()
+    @box.siteChange()
+    margin = @options.margin ? 0
+    @svg.viewbox
+      x: -margin
+      y: -margin
+      width: xmax + 2*margin
+      height: y + 2*margin
+  destroy: ->
+    super()
+    @svg.clear().remove()
+
 fontGui = ->
   ## Convert old URL format (pre-furls) to new format
   search = window.location.search
@@ -501,28 +556,51 @@ fontGui = ->
   .replace /voronoiOnly=1/g, 'show=voronoi'
   window.location.search = search unless window.location.search == search
 
-  app = new FontWebappHTML
-    root: '#output'
-    sizeSlider: '#size'
-    charWidth: 200
-    charPadding: 0
-    lineKern: 32
-    spaceWidth: 50
-    shouldRender: (changed) ->
-      changed.text or changed.font or changed.draggable
-    renderChar: (char, state, parent) ->
-      font = state.font
-      char = char.toUpperCase()
-      letter = window.fonts[font][char]
-      return unless letter?
-      Box =
-        if state.draggable
-          VoronoiEditor
-        else
-          VoronoiBox
-      Box.fromFont letter, SVG().addTo parent
-    linkIdenticalChars: (glyphs) ->
-      glyph.linked = glyphs for glyph in glyphs
+  app = null
+  launch = (changed) ->
+    return unless changed.one
+    state = furls.getState()
+    app?.destroy()
+    common =
+      furls: furls
+      root: '#output'
+      shouldRender: (changed) ->
+        changed.text or changed.font or changed.draggable
+    if state.one
+      app = new FontWebappVoronoi Object.assign common,
+        spaceWidth: boxWidth / 4
+        renderChar: (char, state, box, x, y) ->
+          font = state.font
+          char = char.toUpperCase()
+          letter = window.fonts[font][char]
+          return unless letter?
+          for site in letter.sites
+            box.sites.push
+              x: site.x + x
+              y: site.y + y
+          width: boxWidth
+          height: boxHeight
+    else
+      app = new FontWebappHTML Object.assign common,
+        sizeSlider: '#size'
+        charWidth: 200
+        charPadding: 0
+        lineKern: 32
+        spaceWidth: 50
+        renderChar: (char, state, parent) ->
+          font = state.font
+          char = char.toUpperCase()
+          letter = window.fonts[font][char]
+          return unless letter?
+          Box(state).fromFont letter, SVG().addTo parent
+        linkIdenticalChars: (glyphs) ->
+          glyph.linked = glyphs for glyph in glyphs
+  furls = new Furls()
+  .addInputs()
+  .syncState()
+  .syncClass()
+  .on 'stateChange', launch
+  launch one: true
 
   for font in ['voronoi', 'inverse']
     document.getElementById("#{font}Links").innerHTML = (

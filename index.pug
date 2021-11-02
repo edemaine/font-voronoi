@@ -19,7 +19,7 @@ html
         .w-100
           width: 100%
 
-        .char
+        svg
           outline: green solid 2px
 
         .grid-false .grid, .show-voronoi .sites, .show-sites .voronoi
@@ -50,6 +50,9 @@ html
           br
           input#inverseFont(type="radio", name="font", value="inverse")
           label(for="inverseFont") Inverse&nbsp;typeface
+          br
+          input#one(type="checkbox")
+          label(for="one") One diagram
         td
           table
             tr
