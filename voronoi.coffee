@@ -91,16 +91,19 @@ class VoronoiBox
       y: -edgeWidth/2
       width: @width + edgeWidth
       height: @height + edgeWidth
+    @gridChange()
 
   gridChange: ->
     return unless @gridGroup?
     @gridGroup.clear()
     n = 2 ** @gridLevel
-    for i in [1...n]
+    for i in [1...n * @width]
       x = i / n
-      @gridGroup.line 0, x, boxWidth, x
+      @gridGroup.line x, 0, x, @height
       .stroke gridStroke
-      @gridGroup.line x, 0, x, boxHeight
+    for i in [1...n * @height]
+      y = i / n
+      @gridGroup.line 0, y, @width, y
       .stroke gridStroke
 
   removeDupSites: (trigger = true) ->
@@ -503,8 +506,11 @@ Box = (state) ->
   else
     VoronoiBox
 
-if window?.font?
-  maxGridLevel = Math.max ...(letter.gridLevel for letter in window.font)
+if window?.fonts?
+  fontGridLevel = 0
+  for fontName, fontLetters of window.fonts
+    fontGridLevel = Math.max fontGridLevel,
+      ...(fontLetter.gridLevel for fontChar, fontLetter of fontLetters)
 if FontWebapp?
   class FontWebappVoronoi extends FontWebapp
     initDOM: ->
@@ -513,7 +519,7 @@ if FontWebapp?
       @svg.clear()
       #@box?.destroy()
       @box = new (Box state) @svg
-      @box.gridLevel = maxGridLevel
+      @box.gridLevel = fontGridLevel
       y = 0
       xmax = 0
       for line in state.text.split '\n'
