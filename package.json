@@ -4,7 +4,7 @@
   "description": "Voronoi Font",
   "dependencies": {
     "@svgdotjs/svg.js": "^3.1.1",
-    "font-webapp": "^0.1.2",
+    "font-webapp": "^0.1.4",
     "furls": "^0.5.0",
     "json-stringify-pretty-compact": "^1.0.2",
     "voronoi": "^1.0.0"
