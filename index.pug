@@ -54,31 +54,26 @@ html
           input#one(type="checkbox")
           label(for="one") One diagram
         td
-          table
-            tr
-              td
-                input#sitesVoronoi(type="radio", name="show", value="both", checked)
-                label(for="sitesVoronoi") Sites&nbsp;and&nbsp;Voronoi
-            tr
-              td
-                input#sitesOnly(type="radio", name="show", value="sites")
-                label(for="sitesOnly") Sites&nbsp;only
-                |  
-                b#sitesPuzzle (puzzle)
-            tr
-              td
-                input#voronoiOnly(type="radio", name="show", value="voronoi")
-                label(for="voronoiOnly") Voronoi&nbsp;only
-                |  
-                b#voronoiPuzzle (puzzle)
+          input#sitesVoronoi(type="radio", name="show", value="both", checked)
+          label(for="sitesVoronoi") Sites&nbsp;and&nbsp;Voronoi
+          br
+          input#sitesOnly(type="radio", name="show", value="sites")
+          label(for="sitesOnly") Sites&nbsp;only
+          |  
+          b#sitesPuzzle (puzzle)
+          br
+          input#voronoiOnly(type="radio", name="show", value="voronoi")
+          label(for="voronoiOnly") Voronoi&nbsp;only
+          |  
+          b#voronoiPuzzle (puzzle)
         td
           input#grid(type="checkbox")
           label(for="grid") Grid
           br
           input#draggable(type="checkbox")
           label(for="draggable") Draggable
-          br
-          button#reset.w-100 Reset
+          |  
+          button#reset Reset
 
     #size.noprint
 
