@@ -22,30 +22,32 @@ else if Voronoi?
 class VoronoiBox
   maxGridLevel: 10
 
-  constructor: (@svg) ->
+  constructor: (@svg, @colorCells) ->
     @sites = []
     @voronoiEdges = null
     @gridOn = true
     @gridLevel = 2
-    @voronoiGroup = @gridGroup = @siteGroup = null
+    @vcellGroup = @vedgeGroup = @gridGroup = @siteGroup = null
     @width = boxWidth
     @height = boxHeight
 
     if @svg?
       @bg = @svg.rect()
       .addClass 'bg'
+      @vcellGroup = @svg.group()
+      .addClass 'vcell'
       @gridGroup = @svg.group()
       .addClass 'grid'
       @outline = @svg.rect()
       .addClass 'outline'
-      @voronoiGroup = @svg.group()
-      .addClass 'voronoi'
+      @vedgeGroup = @svg.group()
+      .addClass 'vedge'
       @siteGroup = @svg.group()
       .addClass 'sites'
       @sizeChange()
 
-  @fromState: (state, svg) ->
-    v = new @ svg
+  @fromState: (state, svg, colorCells) ->
+    v = new @ svg, colorCells
     v.loadState state
     v
 
@@ -156,16 +158,50 @@ class VoronoiBox
         delete edge.lSite
         delete edge.rSite
         edge
+    if @colorCells
+      @voronoiCells =
+        for cell in diagram.cells
+          continue if cell.halfedges.length < 2
+          for halfedge, i in cell.halfedges
+            ## Sadly, getStartpoint() seems to get the wrong order.
+            #halfedge.getStartpoint()
+            if i == 0
+              ## Start with the vertex shared with the next edge
+              next = cell.halfedges[1].edge
+              if halfedge.edge.va in [next.va, next.vb]
+                last = halfedge.edge.va
+              else
+                last = halfedge.edge.vb
+            else
+              ## Continue with the vertex not shared with the previous edge.
+              ## Handle near-identical vertices in addition to identical.
+              if last == halfedge.edge.va
+                last = halfedge.edge.vb
+              else if last == halfedge.edge.vb
+                last = halfedge.edge.va
+              else
+                da = distanceSquared last, halfedge.edge.va
+                db = distanceSquared last, halfedge.edge.vb
+                if da < db
+                  last = halfedge.edge.vb
+                else
+                  last = halfedge.edge.va
     @drawVoronoi()
 
   drawVoronoi: ->
-    if @voronoiGroup?
-      @voronoiGroup.clear()
+    if @vcellGroup?
+      @vcellGroup.clear()
+      if @colorCells
+        for cell in @voronoiCells
+          @vcellGroup.polygon ("#{v.x},#{v.y}" for v in cell).join ' '
+          .fill @colorCells()
+    if @vedgeGroup?
+      @vedgeGroup.clear()
       for edge in @voronoiEdges
         # line.stroke
         #   color: 'green'
         #   width: edgeWidth
-        line = @voronoiGroup.line edge.va.x, edge.va.y, edge.vb.x, edge.vb.y
+        line = @vedgeGroup.line edge.va.x, edge.va.y, edge.vb.x, edge.vb.y
         if edge.infinite
           line.addClass 'infinite'
           #line.stroke
@@ -206,8 +242,8 @@ class VoronoiBox
     (near(p.y, @height) and near(q.y, @height))
 
 class VoronoiEditor extends VoronoiBox
-  constructor: (svg) ->
-    super svg
+  constructor: (...args) ->
+    super ...args
     @dragPoint = null
     @dragSet = []
     @alone = false
@@ -431,6 +467,10 @@ getParameterByName = (name, search = location.search) ->
 
 near = (a, b) ->
   Math.abs(a - b) < 0.0000001
+distanceSquared = (v1, v2) ->
+  dx = v1.x - v2.x
+  dy = v1.y - v2.y
+  dx * dx + dy * dy
 
 ## Based on meouw's answer on http://stackoverflow.com/questions/442404/retrieve-the-position-x-y-of-an-html-element
 getOffset = (el) ->
@@ -502,11 +542,19 @@ showIt = ->
 
 ## FONT GUI
 
-Box = (state) ->
+Box = (state, svg) ->
   if state.draggable
     VoronoiEditor
   else
     VoronoiBox
+hue = saturation = lightness = null  # sliders
+colorBox = (state) ->
+  if state.color
+    ->
+      hues = (parseFloat(x) for x in hue.get())
+      saturations = (parseFloat(x) for x in saturation.get())
+      lightnesses = (parseFloat(x) for x in lightness.get())
+      "hsl(#{Math.random()*(hues[1]-hues[0])+hues[0]},#{Math.random()*(saturations[1]-saturations[0])+saturations[0]}%,#{Math.random()*(lightnesses[1]-lightnesses[0])+lightnesses[0]}%)" 
 
 if window?.fonts?
   fontGridLevel = 0
@@ -520,7 +568,7 @@ if FontWebapp?
     render: (state = @furls.getState()) ->
       @svg.clear()
       #@box?.destroy()
-      @box = new (Box state) @svg
+      @box = new (Box state) @svg, colorBox state
       @box.gridLevel = fontGridLevel
       y = 0
       xmax = 0
@@ -564,6 +612,33 @@ fontGui = ->
   .replace /voronoiOnly=1/g, 'show=voronoi'
   window.location.search = search unless window.location.search == search
 
+  ## H/S/L sliders
+  sliderOptions =
+    connect: true
+    tooltips: true
+    orientation: 'vertical'
+    format:
+      from: Math.round
+      to: Math.round
+  hue = noUiSlider.create document.getElementById('hue'),
+    Object.assign {}, sliderOptions,
+      range:
+        min: 0
+        max: 360
+      start: [0, 360]
+  saturation = noUiSlider.create document.getElementById('saturation'),
+    Object.assign {}, sliderOptions,
+      range:
+        min: 0
+        max: 100
+      start: [50, 100]
+  lightness = noUiSlider.create document.getElementById('lightness'),
+    Object.assign {}, sliderOptions,
+      range:
+        min: 0
+        max: 100
+      start: [25, 75]
+
   app = null
   launch = (changed) ->
     return unless changed.one
@@ -573,7 +648,7 @@ fontGui = ->
       furls: furls
       root: '#output'
       shouldRender: (changed) ->
-        changed.text or changed.font or changed.draggable
+        changed.text or changed.font or changed.draggable or changed.color
     if state.one
       app = new FontWebappVoronoi Object.assign common,
         spaceWidth: boxWidth / 4
@@ -600,7 +675,8 @@ fontGui = ->
           char = char.toUpperCase()
           letter = window.fonts[font][char]
           return unless letter?
-          Box(state).fromFont letter, SVG().addTo parent
+          options = Object.assign colorCells: colorBox(state), letter
+          Box(state).fromFont options, SVG().addTo parent
         linkIdenticalChars: (glyphs) ->
           glyph.linked = glyphs for glyph in glyphs
   furls = new Furls()
@@ -649,10 +725,11 @@ main = ->
         url = line[link..]
         label = line[...link].trim()
         continue if label.length != 1  ## single character is final font
-        v = VoronoiBox.fromState url
+        v = VoronoiBox.fromState url, undefined, true
         fonts[currentFont][label] =
           sites: v.sites[..]
           voronoiEdges: v.voronoiEdges
+          voronoiCells: v.voronoiCells
           gridLevel: v.gridLevel
           url: url
 
