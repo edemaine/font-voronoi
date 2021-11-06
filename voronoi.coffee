@@ -153,6 +153,8 @@ class VoronoiBox
       for edge in diagram.edges
         continue if @lineOnEditBox edge.va, edge.vb #@onEditBox(edge.va) and @onEditBox(edge.vb)
         edge.infinite = @onEditBox(edge.va) or @onEditBox(edge.vb)
+        delete edge.lSite
+        delete edge.rSite
         edge
     @drawVoronoi()
 
