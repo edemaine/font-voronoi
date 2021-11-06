@@ -638,6 +638,12 @@ fontGui = ->
         min: 0
         max: 100
       start: [25, 75]
+  for slider in [hue, saturation, lightness]
+    slider.on 'set', ->
+      if app.box?  ## In one-diagram mode, redraw insteade of recompute
+        app.box.drawVoronoi()
+      else
+        app.render()
 
   app = null
   launch = (changed) ->
