@@ -191,6 +191,18 @@ class VoronoiBox
       @gridGroup.hide()
       document.getElementById('grid')?.value = 'Grid On'
 
+  outsideEditBox: (pt) ->
+    pt.x < 0 or pt.x > @width or pt.y < 0 or pt.y > @height
+
+  onEditBox: (pt) ->
+    (near(pt.x, 0) or near(pt.x, @width)) or (near(pt.y, 0) or near(pt.y, @height))
+
+  lineOnEditBox: (p, q) ->
+    (near(p.x, 0) and near(q.x, 0)) or
+    (near(p.x, @width) and near(q.x, @width)) or
+    (near(p.y, 0) and near(q.y, 0)) or
+    (near(p.y, @height) and near(q.y, @height))
+
 class VoronoiEditor extends VoronoiBox
   constructor: (svg) ->
     super svg
@@ -335,18 +347,6 @@ class VoronoiEditor extends VoronoiBox
       @saveState()
       e.preventDefault?()
       e.stopPropagation?()
-
-  outsideEditBox: (pt) ->
-    pt.x < 0 or pt.x > @width or pt.y < 0 or pt.y > @height
-
-  onEditBox: (pt) ->
-    (near(pt.x, 0) or near(pt.x, @width)) or (near(pt.y, 0) or near(pt.y, @height))
-
-  lineOnEditBox: (p, q) ->
-    (near(p.x, 0) and near(q.x, 0)) or
-    (near(p.x, @width) and near(q.x, @width)) or
-    (near(p.y, 0) and near(q.y, 0)) or
-    (near(p.y, @height) and near(q.y, @height))
 
   saveState: ->
     return unless @alone
