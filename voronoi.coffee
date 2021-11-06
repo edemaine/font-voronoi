@@ -610,6 +610,8 @@ fontGui = ->
   .on 'stateChange', launch
   launch one: true
 
+  document.getElementById('reset').addEventListener 'click', -> app.render()
+
   for font in ['voronoi', 'inverse']
     document.getElementById("#{font}Links").innerHTML = (
       for char in (key for key of window.fonts[font]).sort()
