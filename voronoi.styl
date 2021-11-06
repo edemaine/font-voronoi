@@ -14,8 +14,8 @@ edgeWidth = 0.01
     stroke-width: 0.01
     stroke-linecap: round
 
-    // font-inverse doesn't highlight infinite lines
-    /.font-voronoi &.infinite
+    // font-inverse and one-diagram don't highlight infinite lines
+    /.font-voronoi.one-false &.infinite
       stroke: gray
       stroke-dasharray: 0.01, 0.01
       stroke-linecap: butt
