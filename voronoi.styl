@@ -8,6 +8,21 @@ edgeWidth = 0.01
   stroke: black
   stroke-width: edgeWidth
 
+.grid line
+  stroke: #ccc
+  stroke-width: 0.005
+
+.sites circle
+  fill: red
+  stroke: none
+  &:hover
+    fill: purple
+  &.outside
+    fill: gray
+  &.select
+    stroke: #cc0
+    stroke-width: 0.01
+
 .vedge
   line
     stroke: black

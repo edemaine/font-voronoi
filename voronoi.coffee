@@ -2,17 +2,7 @@ boxWidth = 1
 boxHeight = 1
 
 siteRadius = 0.04
-siteColor = 'red'
-siteDragColor = 'purple'
-siteOutsideColor = 'gray'
-siteSelectStroke =
-  color: '#cccc00'
-  width: 0.01
-siteDefaultStroke = 'none'
 edgeWidth = 0.01  # also in voronoi.styl
-gridStroke =
-  color: '#cccccc'
-  width: 0.005
 
 if require?
   voronoi = new (require 'voronoi')
@@ -102,11 +92,9 @@ class VoronoiBox
     for i in [1...n * @width]
       x = i / n
       @gridGroup.line x, 0, x, @height
-      .stroke gridStroke
     for i in [1...n * @height]
       y = i / n
       @gridGroup.line 0, y, @width, y
-      .stroke gridStroke
 
   removeDupSites: (trigger = true) ->
     return  ## not working yet...
@@ -137,8 +125,6 @@ class VoronoiBox
     for site in @sites
       site.circle = @siteGroup.circle siteRadius
       .center site.x, site.y
-      .fill siteColor
-      .stroke siteDefaultStroke
     @sites
 
   hideSites: ->
@@ -198,23 +184,8 @@ class VoronoiBox
     if @vedgeGroup?
       @vedgeGroup.clear()
       for edge in @voronoiEdges
-        # line.stroke
-        #   color: 'green'
-        #   width: edgeWidth
         line = @vedgeGroup.line edge.va.x, edge.va.y, edge.vb.x, edge.vb.y
-        if edge.infinite
-          line.addClass 'infinite'
-          #line.stroke
-          #  color: 'gray'
-          #  width: edgeWidth
-          #.attr
-          #  "stroke-dasharray": "0.01, 0.01"
-        #else
-        #  line.stroke
-        #    color: 'black'
-        #    width: edgeWidth
-        #  .attr
-        #    "stroke-linecap": "round"
+        line.addClass 'infinite' if edge.infinite
 
   gridToggle: ->
     @gridOn = not @gridOn
@@ -293,12 +264,6 @@ class VoronoiEditor extends VoronoiBox
     for site in sites
       do (site) =>
         site.circle
-        #.on 'mouseenter', ->
-        .mouseover =>
-          site.circle.fill siteDragColor
-        #.on 'mouseleave', ->
-        .mouseout =>
-          site.circle.fill siteColor
         .mousedown (e) =>
           e.preventDefault()
           e.stopPropagation()
@@ -331,12 +296,12 @@ class VoronoiEditor extends VoronoiBox
   dragclear: ->
     @dragPoint = null
     for site in @dragSet
-      site.circle?.stroke siteDefaultStroke
+      site.circle?.removeClass 'select'
 
   dragstart: (e) ->
     @dragPoint = @screen_pt e
     for site in @dragSet
-      site.circle?.stroke siteSelectStroke
+      site.circle?.addClass 'select'
       site.startX = site.x
       site.startY = site.y
 
@@ -365,15 +330,15 @@ class VoronoiEditor extends VoronoiBox
         site.y = pos.y
         site.circle.center site.x, site.y
         if @outsideEditBox site
-          site.circle.fill siteOutsideColor
+          site.circle.addClass 'outside'
         else
-          site.circle.fill siteDragColor
+          site.circle.removeClass 'outside'
       @computeVoronoi()
 
   dragstop: (e) ->
     if @dragPoint?
       for site in @dragSet
-        site.circle.fill siteColor
+        site.circle.removeClass 'drag'
       ## Drag outside box to delete a point.
       for site in @dragSet
         if e.type == 'mouseleave' or @outsideEditBox site
