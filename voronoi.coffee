@@ -600,6 +600,7 @@ if FontWebapp?
     destroy: ->
       super()
       @svg.clear().remove()
+    downloadSVG: FontWebappSVG::downloadSVG
 
 fontGui = ->
   ## Convert old URL format (pre-furls) to new format
@@ -693,6 +694,20 @@ fontGui = ->
   launch one: true
 
   document.getElementById('reset').addEventListener 'click', -> app.render()
+
+  document.querySelector('#downloadSVG button').addEventListener 'click', ->
+    copy = SVG().addTo 'body'
+    copy.svg app.svg.svg()
+    ## Add CSS
+    copy.element 'style'
+    .words document.getElementById('svgStyle').innerHTML
+    ## Remove groups set to display: none because of class options
+    ## (which won't be in the SVG).
+    copy.find 'g'
+    .each (g) ->
+      g.remove() if window.getComputedStyle(g.node).display == 'none'
+    app.downloadSVG 'voronoi.svg', copy.svg()
+    copy.remove()
 
   for font in ['voronoi', 'inverse']
     document.getElementById("#{font}Links").innerHTML = (

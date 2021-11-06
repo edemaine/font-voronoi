@@ -29,8 +29,12 @@ html
         .font-voronoi #voronoiPuzzle, .font-inverse #sitesPuzzle
           visibility: hidden
 
-      include:stylus voronoi.styl
+        #downloadSVG
+          text-align: right
+          /.one-false &
+            display: none
 
+    style
       include node_modules/nouislider/dist/nouislider.min.css
       :stylus
         .color-false .colors
@@ -76,6 +80,9 @@ html
           right: inherit
           transform: translate(-50%,-50%)
           z-index: 1
+
+    style#svgStyle
+      include:stylus voronoi.styl
 
     //#include virtual="../../analytics.html"
   body
@@ -140,6 +147,9 @@ html
     p
 
     #output.w-100
+
+    .noprint#downloadSVG
+      button Download SVG
 
     hr.noprint
 
