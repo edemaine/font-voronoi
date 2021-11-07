@@ -662,6 +662,7 @@ fontGui = ->
 
   document.querySelector('#downloadSVG button').addEventListener 'click', ->
     copy = app.svg.clone()
+    copy.addTo 'body'
     ## Add CSS
     copy.element 'style'
     .words document.getElementById('svgStyle').innerHTML
