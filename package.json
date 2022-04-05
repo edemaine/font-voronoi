@@ -5,7 +5,7 @@
   "dependencies": {
     "@svgdotjs/svg.js": "^3.1.1",
     "font-webapp": "^0.1.4",
-    "furls": "^0.5.0",
+    "furls": "^0.7.0",
     "json-stringify-pretty-compact": "^1.0.2",
     "nouislider": "^15.5.0",
     "voronoi": "^1.0.0"
