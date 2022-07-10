@@ -162,7 +162,7 @@ class VoronoiBox
       for site, i in @sites
         siteIndex.set site, i
       @voronoiCells = Array @diagram.cells.length
-      for cell, cellIndex in @diagram.cells
+      for cell in @diagram.cells
         unless siteIndex.has cell.site
           throw new Error "Missing site for cell"
         @voronoiCells[siteIndex.get cell.site] = 
@@ -199,8 +199,6 @@ class VoronoiBox
         @vcellColors ?= []
         for cell, i in @voronoiCells
           continue unless cell?.length
-          ## For precomputed font, cell.site isn't set,
-          ## but cellIndex is accurate.
           polygon = @vcellGroup.polygon ("#{v.x},#{v.y}" for v in cell).join ' '
           .fill @vcellColors[i] ?= @colorCells()
           unless @draggable
