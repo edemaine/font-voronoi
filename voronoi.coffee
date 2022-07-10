@@ -132,13 +132,14 @@ class VoronoiBox
     @siteGroup.hide()
 
   computeVoronoi: ->
-    diagram = voronoi.compute @sites,
+    voronoi.recycle @diagram if @diagram?
+    @diagram = voronoi.compute @sites,
       xl: 0
       xr: @width
       yt: 0
       yb: @height
     @voronoiEdges =
-      for edge in diagram.edges
+      for edge in @diagram.edges
         continue if @lineOnEditBox edge.va, edge.vb #@onEditBox(edge.va) and @onEditBox(edge.vb)
         edge.infinite = @onEditBox(edge.va) or @onEditBox(edge.vb)
         delete edge.lSite
@@ -146,7 +147,7 @@ class VoronoiBox
         edge
     if @colorCells
       @voronoiCells =
-        for cell in diagram.cells
+        for cell in @diagram.cells
           continue if cell.halfedges.length < 2
           for halfedge, i in cell.halfedges
             ## Sadly, getStartpoint() seems to get the wrong order.
@@ -606,7 +607,7 @@ fontGui = ->
       start: [25, 75]
   for slider in [hue, saturation, lightness]
     slider.on 'set', ->
-      if app.box?  ## In one-diagram mode, redraw insteade of recompute
+      if app.box?  ## In one-diagram mode, redraw instead of recompute
         app.box.drawVoronoi()
       else
         app.render()
