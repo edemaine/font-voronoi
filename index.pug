@@ -37,16 +37,28 @@ html
     style
       include node_modules/nouislider/dist/nouislider.min.css
       :stylus
+        #colorGDiv
+          display: none
+        .font-voronoi #colorGDiv
+          display: block
+        .finite
+          display: none
+        .font-voronoi.color-true.colorG-true .finite
+          display: block
         .color-false .colors
           display: none
         .sliderGrid
           display: grid
           grid-template-rows: min-content 1fr
           grid-template-columns: repeat(3, 1fr)
+          /.font-voronoi.color-true.colorG-true &
+            grid-template-columns: repeat(6, 1fr)
           height: 100%
           > label
+            grid-row: 1
             text-align: center
           > div
+            grid-row: 2
             margin-left: 7px
             margin-right: 7px
             margin-top: 7px
@@ -125,6 +137,11 @@ html
           input#color(type="checkbox")
           label(for="color") Color&nbsp;cells
           br
+          #colorGDiv
+            | &nbsp;&nbsp;&nbsp;
+            input#colorG(type="checkbox")
+            label(for="colorG") Separate glyph cells
+            br
           input#grid(type="checkbox")
           label(for="grid") Grid
           br
@@ -138,9 +155,15 @@ html
             label(for="hue", title="Hue") H
             label(for="saturation", title="Saturation") S
             label(for="lightness", title="Lightness") L
+            label.finite(for="hueF", title="Hue for glyph cells") H
+            label.finite(for="saturationF", title="Saturation for glyph cells") S
+            label.finite(for="lightnessF", title="Lightness for glyph cells") L
             #hue
             #saturation
             #lightness
+            #hueF.finite
+            #saturationF.finite
+            #lightnessF.finite
 
     #size.noprint
 
@@ -199,6 +222,8 @@ html
       For example, tighten the hue range to approach single-color tilings;
       lower the maximum saturation to 0 to make grayscale; or
       increase the lightness range to simulate stained glass.
+      In the Voronoi font, you can use <b>Separate glyph cells</b>
+      to choose different ranges for cells that constitute the font's glyphs.
       Tap on a cell (outside Draggable mode) to reroll its color.
       &bull;
       You can toggle visibility of the <b>grid</b> that the sites were designed

@@ -72,11 +72,14 @@ class VoronoiBox
     @gridChange()
     @gridOn = not getParameterByName 'off', search
     @gridDisplay()
-    if getParameterByName 'p', search
-      @sites = for p in getParameterByName('p', search).split ';'
+    if pParam = getParameterByName 'p', search
+      @sites = for p in pParam.split ';'
         [x, y] = p.split ','
         x: parseFloat x
         y: parseFloat y
+    if gParam = getParameterByName 'g', search
+      @glyphCells = for g in gParam
+        parseInt g, 10
     @siteChange()
 
   sizeChange: ->
@@ -135,7 +138,8 @@ class VoronoiBox
     return unless @siteGroup?
     @siteGroup.hide()
 
-  setColorCells: (@colorCells) ->
+  setColorCells: (colorCells) ->
+    @colorCells = colorCells if colorCells?
     delete @vcellColors  # force cell colors to recompute
     if not @colorCells? or @voronoiCells?
       @drawVoronoi()     # redraw using existing cells
@@ -200,12 +204,12 @@ class VoronoiBox
         for cell, i in @voronoiCells
           continue unless cell?.length
           polygon = @vcellGroup.polygon ("#{v.x},#{v.y}" for v in cell).join ' '
-          .fill @vcellColors[i] ?= @colorCells()
+          .fill @vcellColors[i] ?= @colorCells @glyphCells?[i]
           unless @draggable
             do (i, polygon) =>
               polygon.mousedown recolor = (e) =>
                 e.preventDefault()
-                polygon.fill @vcellColors[i] = @colorCells()
+                polygon.fill @vcellColors[i] = @colorCells @glyphCells?[i]
               .touchstart recolor
     if @vedgeGroup?
       @vedgeGroup.clear()
@@ -289,8 +293,8 @@ class VoronoiEditor extends VoronoiBox
   drawSites: ->
     sites = super()
     return unless sites?
-    for site in sites
-      do (site) =>
+    for site, i in sites
+      do (site, i) =>
         site.circle
         .mousedown (e) =>
           e.preventDefault()
@@ -317,6 +321,12 @@ class VoronoiEditor extends VoronoiBox
         #.mouseup (e) ->
         #  unless e.shiftKey or e.ctrlKey
         #    @dragSet = [site]
+        .on 'dblclick', =>
+          @glyphCells ?= (0 for [0...@sites.length])
+          @glyphCells[i] = 1 - (@glyphCells?[i] ? 0)
+          @vcellColors[i] = null
+          @saveState()
+          @drawVoronoi()
 
   screen_pt: (e) ->
     @svg.point e.clientX, e.clientY
@@ -339,6 +349,7 @@ class VoronoiEditor extends VoronoiBox
     return if @dragPoint?
     point = @roundToGrid @screen_pt e
     @sites.push point
+    @glyphCells?.push 0
     @dragSet = [@sites[@sites.length-1]]
     @dragstart e
     @siteChange()
@@ -383,7 +394,9 @@ class VoronoiEditor extends VoronoiBox
     return unless @alone
     siteurl = ("#{site.x},#{site.y}" for site in @sites).join ';'
     history.pushState null, 'voronoi',
-      "#{document.location.pathname}?p=#{siteurl}&grid=#{@gridLevel}" +
+      "#{document.location.pathname}?p=#{siteurl}" +
+      (if @glyphCells? then "&g=#{@glyphCells.join ''}" else '') +
+      "&grid=#{@gridLevel}" +
       if @gridOn then '' else '&off=1'
 
   roundToGrid: (pt) ->
@@ -482,7 +495,8 @@ resize = (id) ->
 
 editorGui = ->
   #return unless document.getElementById 'voronoi'
-  editor = new VoronoiEditor SVG().addTo '#voronoi'
+  editor = new VoronoiEditor SVG().addTo('#voronoi'),
+    (glyph) -> if glyph then 'pink' else 'none'
   editor.alone = true
 
   document.getElementById('grid').addEventListener 'click', -> editor.gridToggle()
@@ -535,25 +549,31 @@ showIt = ->
 
 ## FONT GUI
 
+sliders = {}
+slidersInitial =
+  hue: [0, 360]
+  saturation: [50, 100]
+  lightness: [25, 75]
+
 Box = (state, svg) ->
   if state.draggable
     VoronoiEditor
   else
     VoronoiBox
-hue = saturation = lightness = null  # sliders
 colorBox = (state) ->
-  if state.color
-    ->
-      hues = (parseFloat(x) for x in hue.get())
-      saturations = (parseFloat(x) for x in saturation.get())
-      lightnesses = (parseFloat(x) for x in lightness.get())
-      "hsl(#{Math.random()*(hues[1]-hues[0])+hues[0]},#{Math.random()*(saturations[1]-saturations[0])+saturations[0]}%,#{Math.random()*(lightnesses[1]-lightnesses[0])+lightnesses[0]}%)" 
+  return unless state.color
+  (glyph) ->
+    subsliders = sliders[state.colorG and Boolean glyph]
+    hues = (parseFloat(x) for x in subsliders.hue.get())
+    saturations = (parseFloat(x) for x in subsliders.saturation.get())
+    lightnesses = (parseFloat(x) for x in subsliders.lightness.get())
+    "hsl(#{Math.random()*(hues[1]-hues[0])+hues[0]},#{Math.random()*(saturations[1]-saturations[0])+saturations[0]}%,#{Math.random()*(lightnesses[1]-lightnesses[0])+lightnesses[0]}%)" 
 
 if window?.fonts?
   fontGridLevel = 0
-  for fontName, fontLetters of window.fonts
+  for fontName, fontGlyphs of window.fonts
     fontGridLevel = Math.max fontGridLevel,
-      ...(fontLetter.gridLevel for fontChar, fontLetter of fontLetters)
+      ...(fontGlyph.gridLevel for fontChar, fontGlyph of fontGlyphs)
 if FontWebapp?
   class FontWebappVoronoi extends FontWebapp
     initDOM: ->
@@ -563,6 +583,7 @@ if FontWebapp?
       #@box?.destroy()
       @box = new (Box state) @svg, colorBox state
       @box.gridLevel = fontGridLevel
+      @box.glyphCells = [] if state.font == 'voronoi'
       @renderedGlyphs = [@box]
       y = 0
       xmax = 0
@@ -615,30 +636,21 @@ fontGui = ->
     format:
       from: Math.round
       to: Math.round
-  hue = noUiSlider.create document.getElementById('hue'),
-    Object.assign {}, sliderOptions,
-      range:
-        min: 0
-        max: 360
-      start: [0, 360]
-  saturation = noUiSlider.create document.getElementById('saturation'),
-    Object.assign {}, sliderOptions,
-      range:
-        min: 0
-        max: 100
-      start: [50, 100]
-  lightness = noUiSlider.create document.getElementById('lightness'),
-    Object.assign {}, sliderOptions,
-      range:
-        min: 0
-        max: 100
-      start: [25, 75]
-  for slider in [hue, saturation, lightness]
-    slider.on 'set', ->
-      if app.box?  ## In one-diagram mode, redraw instead of recompute
-        app.box.drawVoronoi()
-      else
-        app.render()
+  for f in [false, true]
+    sliders[f] = {}
+    for hsl in ['hue', 'saturation', 'lightness']
+      sliders[f][hsl] = slider =
+        noUiSlider.create document.getElementById(hsl + if f then 'F' else ''),
+          Object.assign {}, sliderOptions,
+            range:
+              min: 0
+              max: if hsl == 'hue' then 360 else 100
+            start: slidersInitial[hsl][..]
+      slider.on 'set', ->
+        if app.box?  ## In one-diagram mode, redraw instead of recompute
+          app.box.setColorCells()
+        else
+          app.render()
 
   app = null
   launch = (changed) ->
@@ -660,12 +672,13 @@ fontGui = ->
         renderChar: (char, state, box, x, y) ->
           font = state.font
           char = char.toUpperCase()
-          letter = window.fonts[font][char]
-          return unless letter?
-          for site in letter.sites
+          glyph = window.fonts[font][char]
+          return unless glyph?
+          for site, i in glyph.sites
             box.sites.push
               x: site.x + x
               y: site.y + y
+            box.glyphCells?.push glyph.glyphCells?[i]
           width: boxWidth
           height: boxHeight
     else
@@ -678,9 +691,9 @@ fontGui = ->
         renderChar: (char, state, parent) ->
           font = state.font
           char = char.toUpperCase()
-          letter = window.fonts[font][char]
-          return unless letter?
-          options = Object.assign colorCells: colorBox(state), letter
+          glyph = window.fonts[font][char]
+          return unless glyph?
+          options = Object.assign colorCells: colorBox(state), glyph
           Box(state).fromFont options, SVG().addTo parent
         linkIdenticalChars: (glyphs) ->
           glyph.linked = glyphs for glyph in glyphs
@@ -745,12 +758,14 @@ main = ->
         label = line[...link].trim()
         continue if label.length != 1  ## single character is final font
         v = VoronoiBox.fromState url, undefined, true
-        fonts[currentFont][label] =
+        fonts[currentFont][label] = glyph =
           sites: v.sites[..]
           voronoiEdges: v.voronoiEdges
           voronoiCells: v.voronoiCells
+          glyphCells: v.glyphCells
           gridLevel: v.gridLevel
           url: url
+        delete glyph.glyphCells unless glyph.glyphCells?
 
   fs = require 'fs'
   stringify = require 'json-stringify-pretty-compact'
