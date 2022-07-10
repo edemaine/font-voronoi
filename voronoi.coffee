@@ -57,6 +57,7 @@ class VoronoiBox
         x: site.x
         y: site.y
     @voronoiEdges = other.voronoiEdges
+    @voronoiCells = other.voronoiCells
     @siteChange false
     @drawVoronoi()
 
