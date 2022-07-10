@@ -52,12 +52,15 @@ class VoronoiBox
     v
 
   copy: (other) ->
+    ## Clone sites so we can drag our sites without affecting other's.
     @sites =
       for site in other.sites
         x: site.x
         y: site.y
+    ## Alias already computed Voronoi diagram to avoid recomputing it in copy.
     @voronoiEdges = other.voronoiEdges
     @voronoiCells = other.voronoiCells
+    ## Draw but don't compute new Voronoi diagram.
     @siteChange false
     @drawVoronoi()
 
@@ -147,9 +150,15 @@ class VoronoiBox
         delete edge.rSite
         edge
     if @colorCells
-      @voronoiCells =
-        for cell in @diagram.cells
-          continue if cell.halfedges.length < 2
+      ## Reorder @voronoiCells to be in the same order as the sites.
+      siteIndex = new Map
+      for site, i in @sites
+        siteIndex.set site, i
+      @voronoiCells = Array @diagram.cells.length
+      for cell, cellIndex in @diagram.cells
+        unless siteIndex.has cell.site
+          throw new Error "Missing site for cell"
+        @voronoiCells[siteIndex.get cell.site] = 
           for halfedge, i in cell.halfedges
             ## Sadly, getStartpoint() seems to get the wrong order.
             #halfedge.getStartpoint()
@@ -180,9 +189,13 @@ class VoronoiBox
     if @vcellGroup?
       @vcellGroup.clear()
       if @colorCells
-        for cell in @voronoiCells
+        @vcellColors ?= []
+        for cell, i in @voronoiCells
+          continue unless cell?.length
+          ## For precomputed font, cell.site isn't set,
+          ## but cellIndex is accurate.
           @vcellGroup.polygon ("#{v.x},#{v.y}" for v in cell).join ' '
-          .fill @colorCells()
+          .fill @vcellColors[i] ?= @colorCells()
     if @vedgeGroup?
       @vedgeGroup.clear()
       for edge in @voronoiEdges
