@@ -194,8 +194,14 @@ class VoronoiBox
           continue unless cell?.length
           ## For precomputed font, cell.site isn't set,
           ## but cellIndex is accurate.
-          @vcellGroup.polygon ("#{v.x},#{v.y}" for v in cell).join ' '
+          polygon = @vcellGroup.polygon ("#{v.x},#{v.y}" for v in cell).join ' '
           .fill @vcellColors[i] ?= @colorCells()
+          unless @draggable
+            do (i, polygon) =>
+              polygon.mousedown recolor = (e) =>
+                e.preventDefault()
+                polygon.fill @vcellColors[i] = @colorCells()
+              .touchstart recolor
     if @vedgeGroup?
       @vedgeGroup.clear()
       for edge in @voronoiEdges
@@ -228,6 +234,8 @@ class VoronoiBox
     (near(p.y, @height) and near(q.y, @height))
 
 class VoronoiEditor extends VoronoiBox
+  draggable: true
+
   constructor: (...args) ->
     super ...args
     @dragPoint = null
