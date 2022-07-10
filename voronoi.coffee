@@ -135,6 +135,13 @@ class VoronoiBox
     return unless @siteGroup?
     @siteGroup.hide()
 
+  setColorCells: (@colorCells) ->
+    delete @vcellColors  # force cell colors to recompute
+    if not @colorCells? or @voronoiCells?
+      @drawVoronoi()     # redraw using existing cells
+    else
+      @computeVoronoi()  # compute cells and draw them
+
   computeVoronoi: ->
     voronoi.recycle @diagram if @diagram?
     @diagram = voronoi.compute @sites,
@@ -558,6 +565,7 @@ if FontWebapp?
       #@box?.destroy()
       @box = new (Box state) @svg, colorBox state
       @box.gridLevel = fontGridLevel
+      @renderedGlyphs = [@box]
       y = 0
       xmax = 0
       for line in state.text.split '\n'
@@ -643,7 +651,11 @@ fontGui = ->
       furls: furls
       root: '#output'
       shouldRender: (changed) ->
-        changed.text or changed.font or changed.draggable or changed.color
+        changed.text or changed.font or changed.draggable
+      afterMaybeRender: (state, changed, rendered) ->
+        if changed?.color and not rendered
+          for glyph in app.renderedGlyphs
+            glyph.setColorCells colorBox state
     if state.one
       app = new FontWebappVoronoi Object.assign common,
         spaceWidth: boxWidth / 4
