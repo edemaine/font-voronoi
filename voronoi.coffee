@@ -647,10 +647,7 @@ fontGui = ->
               max: if hsl == 'hue' then 360 else 100
             start: slidersInitial[hsl][..]
       slider.on 'set', ->
-        if app.box?  ## In one-diagram mode, redraw instead of recompute
-          app.box.setColorCells()
-        else
-          app.render()
+        app.recolor()
 
   app = null
   launch = (changed) ->
@@ -663,9 +660,8 @@ fontGui = ->
       shouldRender: (changed) ->
         changed.text or changed.font or changed.draggable
       afterMaybeRender: (state, changed, rendered) ->
-        if changed?.color and not rendered
-          for glyph in app.renderedGlyphs
-            glyph.setColorCells colorBox state
+        if (changed?.color or changed?.colorG) and not rendered
+          app.recolor?()
     if state.one
       app = new FontWebappVoronoi Object.assign common,
         spaceWidth: boxWidth / 4
@@ -697,6 +693,10 @@ fontGui = ->
           Box(state).fromFont options, SVG().addTo parent
         linkIdenticalChars: (glyphs) ->
           glyph.linked = glyphs for glyph in glyphs
+    app.recolor = ->
+      colorCells = colorBox @furls.getState()
+      for glyph in @renderedGlyphs
+        glyph.setColorCells colorCells
   furls = new Furls()
   .addInputs()
   .syncState()
