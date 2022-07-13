@@ -550,7 +550,7 @@ showIt = ->
 ## FONT GUI
 
 sliders = {}
-slidersInitial =
+slidersInitial = # should match hidden input initial values in index.pug
   hue: [0, 360]
   saturation: [50, 100]
   lightness: [25, 75]
@@ -636,6 +636,7 @@ fontGui = ->
     format:
       from: Math.round
       to: Math.round
+  sliderToHiddenInput = (g, hsl) -> hsl[0].toUpperCase() + if g then 'G' else ''
   for f in [false, true]
     sliders[f] = {}
     for hsl in ['hue', 'saturation', 'lightness']
@@ -646,7 +647,15 @@ fontGui = ->
               min: 0
               max: if hsl == 'hue' then 360 else 100
             start: slidersInitial[hsl][..]
-      slider.on 'set', ->
+      slider.on 'change', ->
+        state = app.furls.getState()
+        for g in [false, true]
+          for hsl in ['hue', 'saturation', 'lightness']
+            if (not g and state.color) or (g and state.colorG)
+              range = (parseFloat(x) for x in sliders[g][hsl].get()).join '-'
+            else
+              range = ''
+            app.furls.set sliderToHiddenInput(g, hsl), range
         app.recolor()
 
   app = null
@@ -699,6 +708,16 @@ fontGui = ->
         glyph.setColorCells colorCells
   furls = new Furls()
   .addInputs()
+  ## Custom decoder to synchronize hidden input values to sliders
+  for g in [false, true]
+    for hsl in ['hue', 'saturation', 'lightness']
+      slider = sliders[g][hsl]
+      furls.findInput sliderToHiddenInput g, hsl
+      .decode = do (slider) -> (value) ->
+        [min, max] = (parseFloat x for x in value.split '-')
+        slider.set [min, max]
+        value
+  furls
   .syncState()
   .syncClass()
   .on 'stateChange', launch

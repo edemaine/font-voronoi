@@ -151,6 +151,12 @@ html
           button#reset Reset
             span.colors /color
         td.colors
+          input#H(type="hidden", value="0-360")
+          input#S(type="hidden", value="50-100")
+          input#L(type="hidden", value="25-75")
+          input#HG(type="hidden", value="0-360")
+          input#SG(type="hidden", value="50-100")
+          input#LG(type="hidden", value="25-75")
           .sliderGrid
             label(for="hue", title="Hue") H
             label(for="saturation", title="Saturation") S
