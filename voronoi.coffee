@@ -599,6 +599,7 @@ if FontWebapp?
               x += glyph.width
             else
               console.warn "Unrecognized character '#{char}'"
+              continue
             xmax = Math.max xmax, x
             dy = Math.max dy, glyph.height
         y += dy + (@options.lineKern ? 0)
