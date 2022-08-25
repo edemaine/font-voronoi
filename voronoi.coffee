@@ -578,7 +578,7 @@ if FontWebapp?
   class FontWebappVoronoi extends FontWebapp
     initDOM: ->
       @svg = SVG().addTo @root
-    render: (state = @furls.getState()) ->
+    doRender: (state = @furls.getState()) ->
       @svg.clear()
       #@box?.destroy()
       @box = new (Box state) @svg, colorBox state
