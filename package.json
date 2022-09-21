@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "description": "Voronoi Font",
   "dependencies": {
-    "@svgdotjs/svg.js": "^3.1.1",
-    "font-webapp": "^0.3.0",
+    "@svgdotjs/svg.js": "3.1.1",
+    "font-webapp": "0.4.0",
     "furls": "^0.8.1",
     "json-stringify-pretty-compact": "^1.0.2",
     "nouislider": "^15.5.0",

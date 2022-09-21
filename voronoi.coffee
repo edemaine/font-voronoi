@@ -587,7 +587,8 @@ if FontWebapp?
       @renderedGlyphs = [@box]
       y = 0
       xmax = 0
-      for line in state.text.split '\n'
+      for line, i in state.text.split '\n'
+        y += @options.lineKern ? 0 if i > 0
         x = 0
         dy = 0
         for char, c in line
@@ -600,9 +601,10 @@ if FontWebapp?
             else
               console.warn "Unrecognized character '#{char}'"
               continue
-            xmax = Math.max xmax, x
             dy = Math.max dy, glyph.height
-        y += dy + (@options.lineKern ? 0)
+          xmax = Math.max xmax, x
+        dy += @options.blankHeight ? 0 if line == ''
+        y += dy
       @box.width = xmax
       @box.height = y
       @box.sizeChange()
@@ -675,6 +677,7 @@ fontGui = ->
     if state.one
       app = new FontWebappVoronoi Object.assign common,
         spaceWidth: boxWidth / 4
+        blankHeight: boxHeight / 4
         renderChar: (char, state, box, x, y) ->
           font = state.font
           char = char.toUpperCase()
